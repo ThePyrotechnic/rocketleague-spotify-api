@@ -10,8 +10,7 @@ from rocketleague_spotify.models import User, UpdateUserModel, DeleteManyRespons
 app = FastAPI(
     title="Rocket League + Spotify Backend API",
     description="",
-    version="0.0.0",
-    docs_url=None
+    version="0.0.0"
 )
 
 app.add_event_handler("startup", connect_db)
