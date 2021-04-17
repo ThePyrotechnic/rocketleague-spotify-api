@@ -1,6 +1,7 @@
 from functools import lru_cache
-import os
 import importlib.resources
+import os
+from typing import Optional
 
 from pydantic import BaseSettings, AnyUrl
 
@@ -16,6 +17,7 @@ def settings():
 
 class _Settings(BaseSettings):
     mongo_url: AnyUrl
+    test_url: Optional[AnyUrl]
 
     class Config:
         if os.environ.get("NO_ENV_FILE") != "true":
