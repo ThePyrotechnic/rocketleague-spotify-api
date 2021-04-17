@@ -19,7 +19,7 @@ _included in most Python 3 distributions_
 
 ## Testing
 
-To run the tests against the code itself (useful for debugging):
+To run the tests against the code itself (Calls endpoint functions directly; handy for debugging. Does **not** actually start a server):
 
 - `pytest .`
 
