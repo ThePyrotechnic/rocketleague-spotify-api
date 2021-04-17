@@ -36,8 +36,11 @@ class TestEdgeCases:
         assert res.status_code == 200
         assert len(res.json()) == 0
 
-        res = client.delete("/users/")
-        assert res.status_code == 422
+        res = client.get("/users/does_not_exist")
+        assert res.status_code == 404
+
+        res = client.delete(f"{base_url}/users/", params={"user_ids": ["does_not_exist", "neither_does_this"]})
+        assert res.status_code == 404
 
 
 class TestUsers:

@@ -73,10 +73,8 @@ async def delete_user(response: Response, user_id: str):
 
 
 @app.delete("/users/", response_model=DeleteManyResponse, tags=["Users"])
-async def delete_users(response: Response, user_ids: List[str] = Query(list)):
+async def delete_users(response: Response, user_ids: List[str] = Query(...)):
     """Delete multiple users. If no users are deleted the response code will be 404"""
-    if not user_ids:
-        user_ids = []
 
     res = await get_db().users.delete_many({"id": {"$in": user_ids}})
     if res.deleted_count < 1:
