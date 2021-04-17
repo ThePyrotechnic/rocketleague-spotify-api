@@ -52,12 +52,15 @@ async def get_user(user_id: str, response: Response):
 async def get_users(response: Response, user_ids: List[str] = Query(None)):
     """
     Get a list of users. If a user is not found it will not be returned.
-    If no users are found the response code will be 404
+    If no users are found the response will be an empty list
     """
+    if not user_ids:
+        user_ids = []
+
     cursor = get_db().users.find({"id": {"$in": user_ids}})
     res = await cursor.to_list(length=len(user_ids))
     if len(res) == 0:
-        response.status_code = status.HTTP_404_NOT_FOUND
+        return []
     else:
         return res
 
@@ -71,8 +74,11 @@ async def delete_user(response: Response, user_id: str):
 
 
 @app.delete("/users/", response_model=DeleteManyResponse, tags=["Users"])
-async def delete_users(response: Response, user_ids: List[str] = Query(None)):
+async def delete_users(response: Response, user_ids: List[str] = Query(list)):
     """Delete multiple users. If no users are deleted the response code will be 404"""
+    if not user_ids:
+        user_ids = []
+
     res = await get_db().users.delete_many({"id": {"$in": user_ids}})
     if res.deleted_count < 1:
         response.status_code = status.HTTP_404_NOT_FOUND

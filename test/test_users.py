@@ -30,6 +30,16 @@ def handle_test_users(client):  # Ensure users are deleted before the test runs
     client.delete(f"{base_url}/users/", params={"user_ids": [user1["id"], user2["id"]]})
 
 
+class TestEdgeCases:
+    def test_empty(self, client):
+        res = client.get("/users/")
+        assert res.status_code == 200
+        assert len(res.json()) == 0
+
+        res = client.delete("/users/")
+        assert res.status_code == 422
+
+
 class TestUsers:
     def test_user(self, client, handle_test_users):
         res = client.put(f"{base_url}/users/", json=user1)
@@ -75,4 +85,5 @@ class TestUsers:
         assert res.json()["deleted_count"] == 2
 
         res = client.get(f"{base_url}/users/", params={"user_ids": [user1["id"], user2["id"]]})
-        assert res.status_code == 404
+        assert res.status_code == 200
+        assert len(res.json()) == 0
