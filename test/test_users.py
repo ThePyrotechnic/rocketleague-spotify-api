@@ -32,11 +32,11 @@ def handle_test_users(client):  # Ensure users are deleted before the test runs
 
 class TestEdgeCases:
     def test_empty(self, client):
-        res = client.get("/users/")
+        res = client.get(f"{base_url}/users/")
         assert res.status_code == 200
         assert len(res.json()) == 0
 
-        res = client.get("/users/does_not_exist")
+        res = client.get(f"{base_url}/users/does_not_exist")
         assert res.status_code == 404
 
         res = client.delete(f"{base_url}/users/", params={"user_ids": ["does_not_exist", "neither_does_this"]})
