@@ -22,6 +22,15 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+        "fastapi",
+        "uvicorn[standard]",
+        "python-dotenv",
+        "motor"
+    ],
+    extras_require={
+        "test": ["pytest", "requests"]
+    },
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.8",
