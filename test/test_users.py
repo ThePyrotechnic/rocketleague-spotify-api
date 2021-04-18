@@ -71,6 +71,8 @@ class TestUsers:
         assert res.status_code == 201
 
         res = client.get(f"{base_url}/users/", params={"user_ids": [user1["id"], user2["id"]]})
+        res2 = client.get(f"{base_url}/users/", params={"user_ids": ",".join([user1["id"], user2["id"]])})
+        assert res.text == res2.text
         assert res.status_code == 200
         json_res = res.json()
         assert len(json_res) == 2

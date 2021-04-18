@@ -56,6 +56,9 @@ async def get_users(response: Response, user_ids: List[str] = Query(None)):
     if not user_ids:
         user_ids = []
 
+    if len(user_ids) == 1:
+        user_ids = user_ids[0].split(",")  # Also accept a comma-separated list
+
     cursor = get_db().users.find({"id": {"$in": user_ids}})
     res = await cursor.to_list(length=len(user_ids))
     if len(res) == 0:
