@@ -28,5 +28,6 @@ class User(BaseModel):
 class UpdateUserModel(User):
     id: Optional[str]
 
+
 class DeleteManyResponse(BaseModel):
     deleted_count: int

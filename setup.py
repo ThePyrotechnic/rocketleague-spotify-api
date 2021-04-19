@@ -26,7 +26,8 @@ setuptools.setup(
         "fastapi",
         "uvicorn[standard]",
         "python-dotenv",
-        "motor"
+        "motor",
+        "dnspython"
     ],
     extras_require={
         "test": ["pytest", "requests"]
