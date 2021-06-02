@@ -5,12 +5,12 @@ from pymongo.results import UpdateResult
 import uvicorn
 
 from rocketleague_spotify.data import get_db, connect_db, close_db
-from rocketleague_spotify.models import User, UpdateUserModel, DeleteManyResponse
+from rocketleague_spotify.models import User, UserWithAccessToken, UpdateUserModel
 
 app = FastAPI(
     title="Rocket League + Spotify Backend API",
     description="",
-    version="0.0.0"
+    version="1.0.0"
 )
 
 app.add_event_handler("startup", connect_db)
@@ -18,22 +18,36 @@ app.add_event_handler("shutdown", close_db)
 
 
 @app.put("/users/", tags=["Users"])
-async def create_or_update_user(user_data: User, response: Response):
+async def create_or_update_user(user_data: UserWithAccessToken, response: Response):
     """Update an existing user or create a new one if no user with the given ID is found"""
-    res: UpdateResult = await get_db().users.update_one({"id": user_data.id}, {"$set": user_data.dict()}, upsert=True)
+    res = await get_db().users.find_one({"id": user_data.id})
+    if res is not None:
+        user: UserWithAccessToken = UserWithAccessToken.parse_obj(res)
+        if user_data.access_token != user.access_token:  # Bad access token
+            response.status_code = status.HTTP_403_FORBIDDEN
 
-    if res.upserted_id:  # Presence of this variable indicates that a new object was created
-        response.status_code = status.HTTP_201_CREATED
-    elif res.matched_count == 0:  # indicates nothing was found
-        response.status_code = status.HTTP_404_NOT_FOUND
+    if response.status_code is None:  # Only update user if current return status hasn't been set
+        res: UpdateResult = await get_db().users.update_one({"id": user_data.id}, {"$set": user_data.dict()}, upsert=True)
+        if res.upserted_id:  # Presence of this variable indicates that a new object was created
+            response.status_code = status.HTTP_201_CREATED
+        elif res.matched_count == 0:  # indicates nothing was found
+            response.status_code = status.HTTP_404_NOT_FOUND
+        # else the return code will be 200
 
 
 @app.patch("/users/{user_id}", tags=["Users"])
 async def update_user(user_id: str, user_data: UpdateUserModel, response: Response):
     """Update an existing user. If an ID is passed in the JSON body, it is ignored"""
-    res: UpdateResult = await get_db().users.update_one({"id": user_id}, {"$set": user_data.dict(exclude={"id"})})
-
-    if res.modified_count != 1:
+    res = await get_db().users.find_one({"id": user_data.id})
+    if res is not None:
+        user: UserWithAccessToken = UserWithAccessToken.parse_obj(res)
+        if user_data.access_token != user.access_token:  # Bad access token
+            response.status_code = status.HTTP_403_FORBIDDEN
+        else:
+            res: UpdateResult = await get_db().users.update_one({"id": user_id}, {"$set": user_data.dict(exclude={"id"})})
+            if res.modified_count != 1:
+                response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    else:
         response.status_code = status.HTTP_404_NOT_FOUND
 
 
@@ -48,7 +62,7 @@ async def get_user(user_id: str, response: Response):
 
 
 @app.get("/users/", response_model=List[User], tags=["Users"])
-async def get_users(response: Response, user_ids: List[str] = Query(None)):
+async def get_users(user_ids: List[str] = Query(None)):
     """
     Get a list of users. If a user is not found it will not be returned.
     If no users are found the response will be an empty list
@@ -68,21 +82,19 @@ async def get_users(response: Response, user_ids: List[str] = Query(None)):
 
 
 @app.delete("/users/{user_id}", tags=["Users"])
-async def delete_user(response: Response, user_id: str):
+async def delete_user(response: Response, user_id: str, access_token: str = Query(None)):
     """Delete a single user by ID"""
-    res = await get_db().users.delete_one({"id": user_id})
-    if res.deleted_count != 1:
+    res = await get_db().users.find_one({"id": user_id})
+    if res is not None:
+        user: UserWithAccessToken = UserWithAccessToken.parse_obj(res)
+        if access_token != user.access_token:  # Bad access token
+            response.status_code = status.HTTP_403_FORBIDDEN
+        else:
+            res = await get_db().users.delete_one({"id": user_id})
+            if res.deleted_count != 1:
+                response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    else:
         response.status_code = status.HTTP_404_NOT_FOUND
-
-
-@app.delete("/users/", response_model=DeleteManyResponse, tags=["Users"])
-async def delete_users(response: Response, user_ids: List[str] = Query(...)):
-    """Delete multiple users. If no users are deleted the response code will be 404"""
-
-    res = await get_db().users.delete_many({"id": {"$in": user_ids}})
-    if res.deleted_count < 1:
-        response.status_code = status.HTTP_404_NOT_FOUND
-    return {"deleted_count": res.deleted_count}
 
 
 def main():

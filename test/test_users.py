@@ -11,8 +11,9 @@ else:
     base_url = ""
 
 
-user1 = {"id": "abcd1234", "goal_music_uri": "asdfasdf12341234"}
-user2 = {"id": "zxcv5768", "goal_music_uri": "zxcvzxcv56785678"}
+user1 = {"id": "abcd1234", "goal_music_uri": "asdfasdf12341234", "access_token": "poiu0987"}
+user2 = {"id": "zxcv5768", "goal_music_uri": "zxcvzxcv56785678", "access_token": "mnvb4321"}
+users = (user1, user2)
 
 
 @pytest.fixture
@@ -27,7 +28,9 @@ def client():
 
 @pytest.fixture
 def handle_test_users(client):  # Ensure users are deleted before the test runs
-    client.delete(f"{base_url}/users/", params={"user_ids": [user1["id"], user2["id"]]})
+    for user in users:
+        res = client.delete(f"{base_url}/users/{user['id']}", params={"access_token": user["access_token"]})
+        assert res.status_code in [404, 200]
 
 
 class TestEdgeCases:
@@ -39,7 +42,7 @@ class TestEdgeCases:
         res = client.get(f"{base_url}/users/does_not_exist")
         assert res.status_code == 404
 
-        res = client.delete(f"{base_url}/users/", params={"user_ids": ["does_not_exist", "neither_does_this"]})
+        res = client.delete(f"{base_url}/user/does_not_exist")
         assert res.status_code == 404
 
 
@@ -61,7 +64,7 @@ class TestUsers:
         assert json_user["id"] == user1["id"]
         assert json_user["goal_music_uri"] == user1["goal_music_uri"]
 
-        res = client.delete(f"{base_url}/users/{user1['id']}")
+        res = client.delete(f"{base_url}/users/{user1['id']}", params={"access_token": user1["access_token"]})
         assert res.status_code == 200
 
     def test_multiple_users(self, client, handle_test_users):
@@ -85,10 +88,38 @@ class TestUsers:
         assert json_user1["id"] == user1["id"] and json_user2["id"] == user2["id"]
         assert json_user1["goal_music_uri"] == user1["goal_music_uri"] and json_user2["goal_music_uri"] == user2["goal_music_uri"]
 
-        res = client.delete(f"{base_url}/users/", params={"user_ids": [user1["id"], user2["id"]]})
+        res = client.delete(f"{base_url}/users/{user1['id']}", params={"access_token": user1["access_token"]})
         assert res.status_code == 200
-        assert res.json()["deleted_count"] == 2
+        res = client.delete(f"{base_url}/users/{user2['id']}", params={"access_token": user2["access_token"]})
+        assert res.status_code == 200
 
         res = client.get(f"{base_url}/users/", params={"user_ids": [user1["id"], user2["id"]]})
         assert res.status_code == 200
         assert len(res.json()) == 0
+
+
+class TestAuth:
+    def test_create_update_user(self, client, handle_test_users):
+        res = client.put(f"{base_url}/users/", json=user1)
+        assert res.status_code == 201
+
+        user1_no_token = user1.copy()
+        user1_no_token["access_token"] = "wrong"
+        user1_no_token["goal_music_uri"] = "new"
+        res = client.put(f"{base_url}/users/", json=user1_no_token)
+        assert res.status_code == 403
+
+        res = client.get(f"{base_url}/users/{user1['id']}")
+        assert res.status_code == 200
+        assert res.json()["goal_music_uri"] == user1["goal_music_uri"]
+
+    def test_delete_user(self, client, handle_test_users):
+        res = client.put(f"{base_url}/users/", json=user1)
+        assert res.status_code == 201
+
+        res = client.delete(f"{base_url}/users/{user1['id']}", params={"access_token": "1234asdf"})
+        assert res.status_code == 403
+
+        res = client.get(f"{base_url}/users/{user1['id']}")
+        assert res.status_code == 200
+        assert res.json()["goal_music_uri"] == user1["goal_music_uri"]

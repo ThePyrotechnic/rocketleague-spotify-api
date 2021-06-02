@@ -23,11 +23,12 @@ class ObjectIdHelper(ObjectId):
 class User(BaseModel):
     id: str
     goal_music_uri: str
+    access_token: Optional[str]
 
 
-class UpdateUserModel(User):
+class UserWithAccessToken(User):
+    access_token: str
+
+
+class UpdateUserModel(UserWithAccessToken):
     id: Optional[str]
-
-
-class DeleteManyResponse(BaseModel):
-    deleted_count: int
