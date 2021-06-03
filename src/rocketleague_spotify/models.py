@@ -23,7 +23,6 @@ class ObjectIdHelper(ObjectId):
 class User(BaseModel):
     id: str
     goal_music_uri: str
-    access_token: Optional[str]
 
 
 class UserWithAccessToken(User):

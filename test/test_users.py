@@ -123,3 +123,19 @@ class TestAuth:
         res = client.get(f"{base_url}/users/{user1['id']}")
         assert res.status_code == 200
         assert res.json()["goal_music_uri"] == user1["goal_music_uri"]
+
+    def test_no_leaked_tokens(self, client, handle_test_users):
+        res = client.put(f"{base_url}/users/", json=user1)
+        assert res.status_code == 201
+        res = client.put(f"{base_url}/users/", json=user2)
+        assert res.status_code == 201
+
+        for user in users:
+            res = client.get(f"{base_url}/users/{user['id']}")
+            assert res.status_code == 200
+            assert res.json().get("access_token") is None
+
+        res = client.get(f"{base_url}/users", params={"user_ids": [user1["id"], user2["id"]]})
+        assert res.status_code == 200
+        json_res = res.json()
+        assert json_res[0].get("access_token") is None and json_res[1].get("access_token") is None
