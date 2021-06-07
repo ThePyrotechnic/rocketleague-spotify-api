@@ -1,0 +1,16 @@
+html {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+div {
+  text-align: center
+}
+
+#code-box {
+  position: relative;
+  margin: 10px;
+}

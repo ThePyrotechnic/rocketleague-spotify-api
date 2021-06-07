@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import FastAPI, status, Query, Response
+from fastapi.staticfiles import StaticFiles
 from pymongo.results import UpdateResult
 import uvicorn
 
@@ -12,6 +13,8 @@ app = FastAPI(
     description="",
     version="1.0.0"
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_event_handler("startup", connect_db)
 app.add_event_handler("shutdown", close_db)

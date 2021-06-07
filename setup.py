@@ -27,7 +27,8 @@ setuptools.setup(
         "uvicorn[standard]",
         "python-dotenv",
         "motor",
-        "dnspython"
+        "dnspython",
+        "aiofiles"
     ],
     extras_require={
         "test": ["pytest", "requests"]
