@@ -34,7 +34,7 @@ setuptools.setup(
         "test": ["pytest", "requests"]
     },
     package_dir={"": "src"},
-    package_data={"": [".env"]},
+    package_data={"": [".env", "static/*"]},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.8",
 )
