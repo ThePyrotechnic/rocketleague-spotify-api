@@ -15,8 +15,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-with importlib.resources.path("rocketleague_spotify", "static") as static_filepath:
-    app.mount(str(static_filepath.resolve()), StaticFiles(directory="static"), name="static")
+with importlib.resources.path("rocketleague_spotify.static", "index.html") as static_filepath:
+    app.mount("/static", StaticFiles(directory=str(static_filepath.resolve().parent)), name="static")
 
 app.add_event_handler("startup", connect_db)
 app.add_event_handler("shutdown", close_db)
